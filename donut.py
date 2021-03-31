@@ -1,12 +1,15 @@
 import math
 import time
 
+# pixel spacing of the donut surface
 theta_spacing = 0.07
 phi_spacing = 0.02
 
+# set the size of the screen
 screen_width = 32
 screen_height = 32
 
+# set the size of the donut's radii
 R1 = 1
 R2 = 2
 K2 = 5
@@ -14,17 +17,17 @@ K2 = 5
 # roughly at the edge of the torus, which is at x=R1+R2, z=0.  which
 # would be displaced 3/8ths of the width of the screen, which
 # is 3/4th of the way from the center to the side of the screen.
-# screen_width*3/8 = K1*(R1+R2)/(K2+0)
-# screen_width*K2*3/(8*(R1+R2)) = K1
 K1 = screen_width*K2*3/(8*(R1+R2))
 
 def render_frame(A, B):
+    """Render a frame and output it to the screen."""
     # precompute sines and cosines of A and B
     cosA = math.cos(A)
     sinA = math.sin(A)
     cosB = math.cos(B)
     sinB = math.sin(B)
 
+    # initialize output(each frame) and z-buffer
     output = [[ ' ' for i in range(screen_height)] for j in range(screen_width)]
     zbuffer = [[ 0 for i in range(screen_height)] for j in range(screen_width)]
 
@@ -44,13 +47,11 @@ def render_frame(A, B):
             cosphi = math.cos(phi)
             sinphi = math.sin(phi)
 
-            # the x,y coordinate of the circle, before revolving (factored
-            # out of the above equations)
+            # the x,y coordinate of the circle, before revolving
             circlex = R2 + R1 * costheta
             circley = R1 * sintheta
 
-            # final 3D (x,y,z) coordinate after rotations, directly from
-            # our math above
+            # final 3D (x,y,z) coordinate after rotations
             x = circlex*(cosB*cosphi + sinA*sinB*sinphi) - circley*cosA*sinB
             y = circlex*(sinB*cosphi - sinA*cosB*sinphi) + circley*cosA*cosB
             z = K2 + cosA*circlex*sinphi + circley*sinA
@@ -61,7 +62,7 @@ def render_frame(A, B):
             xp = int(screen_width/2 + K1*ooz*x)
             yp = int(screen_height/2 - K1*ooz*y)
 
-            # calculate luminance.  ugly, but correct.
+            # calculate luminance
             L = (cosphi*costheta*sinB - cosA*costheta*sinphi - sinA*sintheta
                 + cosB*(cosA*sintheta - costheta*sinA*sinphi))
 
@@ -81,21 +82,24 @@ def render_frame(A, B):
 
 
     # now, dump output[] to the screen.
-    # bring cursor to "home" location, in just about any currently-used
-    # terminal emulation mode
     print()
     for j in range(screen_height):
+        # offset the frame
         print(" " * 14, end="")
         for i in range(screen_width):
             print(output[i][j], end="")
         print("\n", end="")
     print()
 
-
+# initialize the angles of rotation
 A = 1.0
 B = 1.0
+
+# loop to show frames in a succession
 for _ in range(1000):
     render_frame(A, B)
+    # wait a few miliseconds before rendering another frame
     time.sleep(0.05)
+    # increament the angles of rotation
     A += 0.07
     B += 0.02
